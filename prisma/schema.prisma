@@ -1,0 +1,177 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  phone     String?
+  role      Role     @default(CUSTOMER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String?
+  image       String?
+  position    Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  products    Product[]
+}
+
+model Product {
+  id             String      @id @default(cuid())
+  name           String
+  slug           String      @unique
+  description    String
+  price          Int
+  compareAtPrice Int?
+  images         String[]
+  categoryId     String
+  category       Category    @relation(fields: [categoryId], references: [id])
+  hasHeatLevel   Boolean     @default(false)
+  isAvailable    Boolean     @default(true)
+  isFeatured     Boolean     @default(false)
+  stock          Int         @default(100)
+  sku            String?
+  tags           String[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  orderItems     OrderItem[]
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  phone     String?
+  hours     String
+  note      String?
+  mapsUrl   String?
+  isActive  Boolean  @default(true)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+  customerName  String
+  customerEmail String
+  customerPhone String
+  items         OrderItem[]
+  subtotal      Int
+  discount      Int         @default(0)
+  deliveryFee   Int         @default(0)
+  total         Int
+  status        OrderStatus @default(PENDING)
+  deliveryType  String      @default("delivery")
+  address       String?
+  area          String?
+  city          String?
+  branchId      String?
+  branch        Branch?     @relation(fields: [branchId], references: [id])
+  paymentMethod String      @default("COD")
+  notes         String?
+  couponCode    String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id         String   @id @default(cuid())
+  orderId    String
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  name       String
+  price      Int
+  quantity   Int
+  heatLevel  String?
+  image      String?
+  createdAt  DateTime @default(now())
+}
+
+model Coupon {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  type           String    @default("PERCENTAGE")
+  value          Int
+  minOrderAmount Int       @default(0)
+  maxUses        Int?
+  usedCount      Int       @default(0)
+  isActive       Boolean   @default(true)
+  expiresAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model SiteSettings {
+  id               String   @id @default("settings")
+  siteName         String   @default("Seven Sides")
+  tagline          String   @default("Home of Red Tenders")
+  primaryPhone     String   @default("+92 319 6481040")
+  primaryEmail     String   @default("sevensides.pk@gmail.com")
+  whatsappNumber   String   @default("923196481040")
+  deliveryFee      Int      @default(200)
+  freeDeliveryMin  Int      @default(2500)
+  instagramUrl     String   @default("https://www.instagram.com/sevensides.pk")
+  facebookUrl      String   @default("https://www.facebook.com/SevenSides.pk")
+  aboutText        String   @default("")
+  updatedAt        DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String?
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  type      String   @default("HERO")
+  title     String?
+  subtitle  String?
+  image     String
+  link      String?
+  position  Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

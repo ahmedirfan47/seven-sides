@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  body {
+    @apply bg-dark text-white font-sans;
+    overflow-x: hidden;
+    width: 100%;
+    background-color: #0A0A0A;
+  }
+  h1, h2, h3, h4, h5 { @apply font-display; }
+  a, button, [role="button"], input, select, textarea, label {
+    touch-action: manipulation;
+  }
+  select, input, textarea { font-size: 16px; }
+}
+
+@layer components {
+  .container-px { @apply px-4 sm:px-6 lg:px-8; }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gold-500
+           px-6 py-3 text-sm font-semibold text-dark-600 shadow-gold
+           transition-all duration-200 hover:bg-gold-400 active:scale-[0.97]
+           disabled:opacity-50 disabled:cursor-not-allowed;
+    min-height: 44px;
+  }
+  .btn-teal {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-teal-500
+           px-6 py-3 text-sm font-semibold text-white shadow-teal
+           transition-all duration-200 hover:bg-teal-400 active:scale-[0.97];
+    min-height: 44px;
+  }
+  .btn-outline-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border-2
+           border-gold-500 bg-transparent px-6 py-3 text-sm font-semibold text-gold-500
+           transition-all duration-200 hover:bg-gold-500 hover:text-dark-600 active:scale-[0.97];
+    min-height: 44px;
+  }
+  .btn-outline-white {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border-2
+           border-white/40 bg-transparent px-6 py-3 text-sm font-semibold text-white
+           transition-all duration-200 hover:bg-white/10 active:scale-[0.97];
+    min-height: 44px;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2.5
+           text-sm font-semibold text-white transition-all hover:bg-dark-400;
+    min-height: 44px;
+  }
+
+  .card-dark {
+    @apply rounded-2xl border bg-dark-500 shadow-card-dark transition-all duration-300;
+    border-color: #2A2A2A;
+  }
+  .card-dark:hover { border-color: #3A3A3A; }
+
+  /* 16px prevents iOS auto-zoom on input focus */
+  .input-dark {
+    @apply w-full rounded-2xl border bg-dark-400 px-4 py-3 text-base text-white
+           placeholder:text-dark-100 transition-all duration-200
+           focus:border-gold-500 focus:outline-none focus:ring-2 focus:ring-gold-500/20;
+    border-color: #3A3A3A;
+    -webkit-appearance: none;
+  }
+  .label-dark { @apply mb-1.5 block text-sm font-semibold text-dark-50; }
+
+  .eyebrow-gold {
+    @apply mb-3 inline-block text-xs font-bold uppercase tracking-[0.25em] text-gold-500;
+  }
+  .eyebrow-teal {
+    @apply mb-3 inline-block text-xs font-bold uppercase tracking-[0.25em] text-teal-400;
+  }
+
+  .badge-gold {
+    @apply inline-flex items-center rounded-full bg-gold-500/20 px-3 py-0.5 text-xs font-bold text-gold-400;
+  }
+  .badge-teal {
+    @apply inline-flex items-center rounded-full bg-teal-500/20 px-3 py-0.5 text-xs font-bold text-teal-400;
+  }
+  .badge-heat {
+    @apply inline-flex items-center rounded-full bg-heat/20 px-3 py-0.5 text-xs font-bold text-heat;
+  }
+  .badge-new {
+    @apply inline-flex items-center rounded-full bg-teal-500/20 px-2.5 py-0.5
+           text-[10px] font-black uppercase tracking-wider text-teal-400;
+  }
+}
+
+@layer utilities {
+  .text-balance   { text-wrap: balance; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+}
+
+.admin-scroll::-webkit-scrollbar       { width: 4px; }
+.admin-scroll::-webkit-scrollbar-track { background: transparent; }
+.admin-scroll::-webkit-scrollbar-thumb { background: #3A3A3A; border-radius: 10px; }
+
+@media (max-width: 768px) {
+  button, a[href], [role="button"] { min-height: 44px; }
+}
