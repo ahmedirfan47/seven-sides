@@ -12,7 +12,7 @@
     overflow-x: hidden;
   }
   body {
-    @apply bg-dark text-white font-sans;
+    @apply font-sans text-white;
     overflow-x: hidden;
     width: 100%;
     background-color: #0A0A0A;
@@ -30,7 +30,7 @@
   .btn-gold {
     @apply inline-flex items-center justify-center gap-2 rounded-full bg-gold-500
            px-6 py-3 text-sm font-semibold text-dark-600 shadow-gold
-           transition-all duration-200 hover:bg-gold-400 active:scale-[0.97]
+           transition-all duration-200 hover:bg-gold-400 hover:shadow-gold-strong active:scale-[0.97]
            disabled:opacity-50 disabled:cursor-not-allowed;
     min-height: 44px;
   }
@@ -62,9 +62,12 @@
     @apply rounded-2xl border bg-dark-500 shadow-card-dark transition-all duration-300;
     border-color: #2A2A2A;
   }
-  .card-dark:hover { border-color: #3A3A3A; }
+  .card-dark:hover {
+    @apply shadow-hover-dark;
+    border-color: #3A3A3A;
+  }
 
-  /* 16px prevents iOS auto-zoom on input focus */
+  /* 16px minimum prevents iOS auto-zoom */
   .input-dark {
     @apply w-full rounded-2xl border bg-dark-400 px-4 py-3 text-base text-white
            placeholder:text-dark-100 transition-all duration-200
@@ -74,25 +77,21 @@
   }
   .label-dark { @apply mb-1.5 block text-sm font-semibold text-dark-50; }
 
-  .eyebrow-gold {
-    @apply mb-3 inline-block text-xs font-bold uppercase tracking-[0.25em] text-gold-500;
-  }
-  .eyebrow-teal {
-    @apply mb-3 inline-block text-xs font-bold uppercase tracking-[0.25em] text-teal-400;
-  }
+  .eyebrow-gold { @apply mb-3 inline-block text-xs font-bold uppercase tracking-[0.25em] text-gold-500; }
+  .eyebrow-teal { @apply mb-3 inline-block text-xs font-bold uppercase tracking-[0.25em] text-teal-400; }
 
-  .badge-gold {
-    @apply inline-flex items-center rounded-full bg-gold-500/20 px-3 py-0.5 text-xs font-bold text-gold-400;
+  .badge-gold { @apply inline-flex items-center rounded-full bg-gold-500/20 px-3 py-0.5 text-xs font-bold text-gold-400; }
+  .badge-teal { @apply inline-flex items-center rounded-full bg-teal-500/20 px-3 py-0.5 text-xs font-bold text-teal-400; }
+  .badge-heat { @apply inline-flex items-center rounded-full bg-heat/20 px-3 py-0.5 text-xs font-bold text-heat; }
+  .badge-new  { @apply inline-flex items-center rounded-full bg-teal-500/20 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-teal-400; }
+
+  /* Category header for menu grouping */
+  .cat-header {
+    @apply inline-flex items-center gap-2 rounded-full bg-gold-500 px-4 py-1.5;
   }
-  .badge-teal {
-    @apply inline-flex items-center rounded-full bg-teal-500/20 px-3 py-0.5 text-xs font-bold text-teal-400;
-  }
-  .badge-heat {
-    @apply inline-flex items-center rounded-full bg-heat/20 px-3 py-0.5 text-xs font-bold text-heat;
-  }
-  .badge-new {
-    @apply inline-flex items-center rounded-full bg-teal-500/20 px-2.5 py-0.5
-           text-[10px] font-black uppercase tracking-wider text-teal-400;
+  .cat-header-text {
+    @apply font-display text-dark-600 tracking-wider;
+    font-size: 13px;
   }
 }
 

@@ -6,7 +6,7 @@ import { formatPrice } from '@/lib/utils';
 import AddToCartButton from '@/components/storefront/AddToCartButton';
 import ProductCard from '@/components/storefront/ProductCard';
 import HeatLevelSelector from './HeatLevelSelector';
-import { Flame, ArrowLeft, Tag } from 'lucide-react';
+import { ArrowLeft, Tag, Flame } from 'lucide-react';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-dynamic';
@@ -14,12 +14,9 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(
   { params }: { params: Promise<{ slug: string }> },
 ): Promise<Metadata> {
-  const { slug }   = await params;
-  const product    = await db.product.findUnique({
-    where:  { slug },
-    select: { name: true, description: true },
-  });
-  if (!product) return { title: 'Product Not Found' };
+  const { slug } = await params;
+  const product  = await db.product.findUnique({ where: { slug }, select: { name: true, description: true } });
+  if (!product) return { title: 'Not Found' };
   return { title: product.name, description: product.description };
 }
 
@@ -32,54 +29,66 @@ export default async function ProductPage(
     where:   { slug },
     include: { category: true },
   });
-
   if (!product) notFound();
 
   const related = await db.product.findMany({
-    where: {
-      categoryId:  product.categoryId,
-      isAvailable: true,
-      NOT:         { id: product.id },
-    },
+    where:   { categoryId: product.categoryId, isAvailable: true, NOT: { id: product.id } },
     include: { category: true },
     take:    4,
   });
+
+  const isSig = product.tags.includes('signature') || product.tags.includes('bestseller');
+  const isNew = product.tags.includes('new');
 
   return (
     <div style={{ backgroundColor: '#0A0A0A', minHeight: '100vh', paddingTop: '5rem' }}>
       <div className="container-px mx-auto max-w-6xl py-10">
 
         {/* Back */}
-        <Link
-          href="/menu"
-          className="inline-flex items-center gap-2 text-sm text-dark-100 hover:text-gold-400 transition-colors mb-8"
-        >
-          <ArrowLeft className="h-4 w-4" /> Back to Menu
+        <Link href="/menu"
+          className="inline-flex items-center gap-2 text-sm text-dark-100 hover:text-gold-400 transition-colors mb-8 group">
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Menu
         </Link>
 
-        {/* Product */}
+        {/* Product grid */}
         <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
 
-          {/* Images */}
+          {/* Image */}
           <div className="space-y-3">
             <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-dark-400">
               {product.images[0] ? (
                 <Image
                   src={product.images[0]}
                   alt={product.name}
-                  fill
-                  priority
+                  fill priority
                   className="object-cover"
                   sizes="(max-width:1024px) 100vw, 50vw"
                 />
               ) : (
-                <div className="flex h-full w-full items-center justify-center text-6xl">🍗</div>
+                <div className="flex h-full w-full items-center justify-center">
+                  <Flame className="h-24 w-24 text-gold-500/20 animate-flame-pulse" strokeWidth={1} />
+                </div>
               )}
+
               {!product.isAvailable && (
                 <div className="absolute inset-0 flex items-center justify-center bg-dark-600/70 backdrop-blur-sm">
-                  <span className="rounded-full border border-dark-300 bg-dark-500 px-6 py-2 text-sm font-bold text-dark-100">
+                  <span className="rounded-full border border-dark-300 bg-dark-500 px-8 py-3 text-sm font-bold text-dark-100">
                     Sold Out
                   </span>
+                </div>
+              )}
+
+              {isSig && (
+                <div className="absolute top-4 left-4">
+                  <span className="inline-flex items-center rounded-full bg-gold-500 px-3 py-1.5 text-xs font-bold text-dark-600">
+                    Signature
+                  </span>
+                </div>
+              )}
+              {isNew && (
+                <div className="absolute top-4 left-4">
+                  <span className="badge-new">New</span>
                 </div>
               )}
             </div>
@@ -87,17 +96,8 @@ export default async function ProductPage(
             {product.images.length > 1 && (
               <div className="flex gap-2 overflow-x-auto scrollbar-hide">
                 {product.images.map((img, i) => (
-                  <div
-                    key={i}
-                    className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-dark-300 bg-dark-400"
-                  >
-                    <Image
-                      src={img}
-                      alt={`${product.name} ${i + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="80px"
-                    />
+                  <div key={i} className="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-dark-300 bg-dark-400">
+                    <Image src={img} alt={`${product.name} ${i + 1}`} fill className="object-cover" sizes="80px" />
                   </div>
                 ))}
               </div>
@@ -107,23 +107,12 @@ export default async function ProductPage(
           {/* Details */}
           <div className="flex flex-col gap-5">
 
-            {/* Badges */}
+            {/* Category + tags */}
             <div className="flex flex-wrap items-center gap-2">
-              <Link
-                href={`/menu?category=${product.category.slug}`}
-                className="badge-teal text-xs hover:opacity-80 transition-opacity"
-              >
+              <Link href={`/menu?category=${product.category.slug}`}
+                className="badge-teal text-xs hover:opacity-80 transition-opacity">
                 {product.category.name}
               </Link>
-              {product.tags.includes('new') && (
-                <span className="badge-new">New</span>
-              )}
-              {product.tags.includes('bestseller') && (
-                <span className="badge-gold text-xs">Bestseller</span>
-              )}
-              {product.tags.includes('signature') && (
-                <span className="badge-gold text-xs">Signature</span>
-              )}
               {product.hasHeatLevel && (
                 <span className="badge-heat text-xs flex items-center gap-1">
                   <Flame className="h-3 w-3" strokeWidth={2} /> Heat Levels Available
@@ -131,17 +120,17 @@ export default async function ProductPage(
               )}
             </div>
 
-            <h1 className="font-display text-4xl text-white sm:text-5xl leading-none">
+            {/* Name */}
+            <h1 className="font-display text-white leading-none" style={{ fontSize: 'clamp(2.5rem, 8vw, 4rem)' }}>
               {product.name.toUpperCase()}
             </h1>
 
-            <p className="text-base text-dark-100 leading-relaxed">
-              {product.description}
-            </p>
+            {/* Description */}
+            <p className="text-base text-dark-100 leading-relaxed">{product.description}</p>
 
             {/* Price */}
             <div className="flex items-baseline gap-3">
-              <span className="font-display text-3xl text-gold-400">
+              <span className="font-display text-4xl text-gold-400">
                 {formatPrice(product.price)}
               </span>
               {product.compareAtPrice && product.compareAtPrice > product.price && (
@@ -149,10 +138,13 @@ export default async function ProductPage(
                   {formatPrice(product.compareAtPrice)}
                 </span>
               )}
-              <span className="text-xs text-dark-200">Excl. taxes</span>
+              <span className="text-xs text-dark-200">excl. taxes</span>
             </div>
 
-            {/* Heat selector (client) or direct add (server-renderable) */}
+            {/* Divider */}
+            <div className="border-t border-dark-300" />
+
+            {/* Heat selector or direct add */}
             {product.hasHeatLevel && product.isAvailable ? (
               <HeatLevelSelector
                 product={{
@@ -177,23 +169,23 @@ export default async function ProductPage(
                   hasHeatLevel: product.hasHeatLevel,
                 }}
                 selectedHeat="none"
-                className="py-4 text-base"
+                className="py-4 text-base w-full"
               />
             )}
 
+            {/* SKU */}
             {product.sku && (
               <p className="flex items-center gap-2 text-xs text-dark-200">
                 <Tag className="h-3.5 w-3.5" /> SKU: {product.sku}
               </p>
             )}
 
+            {/* Tags */}
             {product.tags.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 {product.tags.map(tag => (
-                  <span
-                    key={tag}
-                    className="rounded-full border border-dark-300 bg-dark-400 px-3 py-0.5 text-xs text-dark-100 capitalize"
-                  >
+                  <span key={tag}
+                    className="rounded-full border border-dark-300 bg-dark-400 px-3 py-0.5 text-xs text-dark-100 capitalize">
                     {tag}
                   </span>
                 ))}
@@ -202,19 +194,22 @@ export default async function ProductPage(
           </div>
         </div>
 
-        {/* Related */}
+        {/* Related products */}
         {related.length > 0 && (
-          <section className="mt-16">
-            <div className="mb-6">
-              <span className="eyebrow-teal">More from {product.category.name}</span>
-              <h2 className="font-display text-3xl text-white">YOU MIGHT ALSO LIKE</h2>
+          <section className="mt-16 pt-10 border-t border-dark-300">
+            <div className="mb-8 flex items-end justify-between">
+              <div>
+                <span className="eyebrow-teal">More from {product.category.name}</span>
+                <h2 className="font-display text-3xl text-white">YOU MIGHT ALSO LIKE</h2>
+              </div>
+              <Link href={`/menu?category=${product.category.slug}`}
+                className="hidden sm:flex items-center gap-1 text-sm font-semibold text-gold-400 hover:text-gold-300 transition-colors">
+                View All →
+              </Link>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {related.map(p => (
-                <ProductCard
-                  key={p.id}
-                  product={{ ...p, compareAtPrice: p.compareAtPrice ?? null }}
-                />
+                <ProductCard key={p.id} product={{ ...p, compareAtPrice: p.compareAtPrice ?? null }} />
               ))}
             </div>
           </section>

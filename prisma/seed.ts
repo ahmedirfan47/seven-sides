@@ -4,103 +4,88 @@ import bcrypt from 'bcryptjs';
 const db = new PrismaClient();
 
 async function main() {
-  console.log('Seeding Seven Sides…');
+  console.log('Seeding Seven Sides...');
 
-  // Admin
-  const admin = await db.user.upsert({
-    where:  { email: process.env.ADMIN_EMAIL ?? 'admin@sevensides.pk' },
-    create: { name:'Seven Sides Admin', email:process.env.ADMIN_EMAIL??'admin@sevensides.pk', password:await bcrypt.hash(process.env.ADMIN_PASSWORD??'SevenAdmin2026!',12), role:'ADMIN' },
+  const adminEmail    = process.env.ADMIN_EMAIL    ?? 'admin@sevensides.pk';
+  const adminPassword = process.env.ADMIN_PASSWORD ?? 'SevenAdmin2026!';
+  const adminName     = process.env.ADMIN_NAME     ?? 'Seven Sides Admin';
+
+  await db.user.upsert({
+    where:  { email: adminEmail },
+    create: { name: adminName, email: adminEmail, password: await bcrypt.hash(adminPassword, 12), role: 'ADMIN' },
     update: {},
   });
-  console.log('Admin:', admin.email);
 
-  // Settings
-  await db.siteSettings.upsert({ where:{id:'settings'}, create:{id:'settings'}, update:{} });
+  await db.siteSettings.upsert({ where: { id: 'settings' }, create: { id: 'settings' }, update: {} });
 
-  // Branches
   const branches = [
-    { id:'dha-p5',    name:'DHA Phase 5',       address:'15-A Street 2, Sector A, Phase 5, D.H.A, Lahore', phone:'+92 319 6481040', hours:'12:00 PM – 12:00 AM', note:null,                  mapsUrl:'https://maps.google.com/?q=Seven+Sides+DHA+Phase+5+Lahore', isActive:true, position:0 },
-    { id:'cantt',     name:'Girja Chowk Cantt', address:'Bagh Ali Road, Girja Chowk, Cantt, Lahore',        phone:'+92 322 7694926', hours:'12:00 PM – 01:00 AM', note:'Takeaway & Delivery only', mapsUrl:'https://maps.google.com/?q=Seven+Sides+Girja+Chowk+Lahore', isActive:true, position:1 },
-    { id:'lake-city', name:'Lake City',          address:'Lake City, Lahore',                                 phone:null,              hours:'12:00 PM – 01:00 AM', note:null,                  mapsUrl:'https://maps.google.com/?q=Seven+Sides+Lake+City+Lahore',  isActive:true, position:2 },
-    { id:'model-town',name:'Model Town',          address:'Model Town, Lahore',                               phone:null,              hours:'12:00 PM – 01:00 AM', note:'Newest location',     mapsUrl:'https://maps.google.com/?q=Seven+Sides+Model+Town+Lahore', isActive:true, position:3 },
+    { id:'dha-p5',     name:'DHA Phase 5',       address:'15-A Street 2, Sector A, Phase 5, D.H.A, Lahore', phone:'+92 319 6481040', hours:'12:00 PM – 12:00 AM', note:null,                     mapsUrl:'https://maps.google.com/?q=Seven+Sides+DHA+Phase+5+Lahore',    isActive:true, position:0 },
+    { id:'cantt',      name:'Girja Chowk Cantt',  address:'Bagh Ali Road, Girja Chowk, Cantt, Lahore',         phone:'+92 322 7694926', hours:'12:00 PM – 01:00 AM', note:'Takeaway & Delivery only', mapsUrl:'https://maps.google.com/?q=Seven+Sides+Girja+Chowk+Cantt+Lahore', isActive:true, position:1 },
+    { id:'lake-city',  name:'Lake City',           address:'Lake City, Lahore',                                  phone:'+92 370 7743936', hours:'12:00 PM – 01:00 AM', note:null,                     mapsUrl:'https://maps.google.com/?q=Seven+Sides+Lake+City+Lahore',       isActive:true, position:2 },
+    { id:'model-town', name:'Model Town',           address:'Model Town, Lahore',                                phone:null,              hours:'12:00 PM – 01:00 AM', note:'Newest location',        mapsUrl:'https://maps.google.com/?q=Seven+Sides+Model+Town+Lahore',      isActive:true, position:3 },
   ];
-  for (const b of branches) { await db.branch.upsert({ where:{ id:b.id }, create:b, update:b }); }
-  console.log('Branches seeded');
+  for (const b of branches) {
+    await db.branch.upsert({ where: { id: b.id }, create: b, update: b });
+  }
 
-  // Categories
   const cats = [
-    { name:'Bird Menu',   slug:'bird-menu',   position:0, isActive:true },
-    { name:'Sliders',     slug:'sliders',     position:1, isActive:true },
-    { name:'Tenders',     slug:'tenders',     position:2, isActive:true },
-    { name:'Wraps',       slug:'wraps',       position:3, isActive:true },
-    { name:'Fries',       slug:'fries',       position:4, isActive:true },
-    { name:'Shakes',      slug:'shakes',      position:5, isActive:true },
-    { name:'SS Treats',   slug:'ss-treats',   position:6, isActive:true },
-    { name:'Extras',      slug:'extras',      position:7, isActive:true },
-    { name:'Drinks',      slug:'drinks',      position:8, isActive:true },
+    { name:'Bird Menu',  slug:'bird-menu',  position:0 },
+    { name:'Sliders',    slug:'sliders',    position:1 },
+    { name:'Tenders',    slug:'tenders',    position:2 },
+    { name:'Wraps',      slug:'wraps',      position:3 },
+    { name:'Fries',      slug:'fries',      position:4 },
+    { name:'Shakes',     slug:'shakes',     position:5 },
+    { name:'SS Treats',  slug:'ss-treats',  position:6 },
+    { name:'Extras',     slug:'extras',     position:7 },
+    { name:'Drinks',     slug:'drinks',     position:8 },
   ];
   const catMap: Record<string, string> = {};
   for (const c of cats) {
-    const cat = await db.category.upsert({ where:{ slug:c.slug }, create:c, update:c });
+    const cat = await db.category.upsert({ where:{ slug:c.slug }, create:{ ...c, isActive:true }, update:c });
     catMap[c.slug] = cat.id;
   }
-  console.log('Categories seeded');
 
-  // Products
   const products = [
-    // Bird Menu
-    { name:'The Sando', slug:'the-sando', description:'House Bread, Hot Chicken Tenders, Cheese Fondue & Comeback Sauce', price:975, categorySlug:'bird-menu', hasHeatLevel:true, isFeatured:true, tags:['signature','bestseller'] },
-    // Sliders
-    { name:'Hot Chicken Slider', slug:'hot-chicken-slider', description:'House Bun, Hot Chicken, Coleslaw, Pickles, Cheese & Comeback Sauce', price:875, categorySlug:'sliders', hasHeatLevel:true, isFeatured:true, tags:['bestseller'] },
-    { name:'Honey Sriracha Slider', slug:'honey-sriracha-slider', description:'House Bun, Crispy Chicken Fillet, Lettuce, Pickles, Cheese & Honey Sriracha Sauce', price:875, categorySlug:'sliders', hasHeatLevel:false, isFeatured:false, tags:['new'] },
-    { name:'Hot Honey Ranch Slider', slug:'hot-honey-ranch-slider', description:'House Bun, Crispy Chicken Fillet, Lettuce, Cheese & Honey Ranch Mayo', price:875, categorySlug:'sliders', hasHeatLevel:false, isFeatured:false, tags:['new'] },
-    { name:'Caesar Chicken Slider', slug:'caesar-chicken-slider', description:'House Bun, Crispy Chicken Fillet, Lettuce, Cheese & Secret Sauce', price:875, categorySlug:'sliders', hasHeatLevel:false, isFeatured:false, tags:['new'] },
-    // Tenders
-    { name:'Red Tenders (5 Pcs)', slug:'red-tenders', description:'5 Pcs of Tenders Served With Fries & Comeback Sauce. Choose your heat level.', price:1245, categorySlug:'tenders', hasHeatLevel:true, isFeatured:true, tags:['signature','bestseller'] },
-    { name:'Crunchy Tenders (5 Pcs)', slug:'crunchy-tenders', description:'5 Pcs of Crunchy Tenders Served With Fries & Comeback Sauce', price:1245, categorySlug:'tenders', hasHeatLevel:false, isFeatured:true, tags:['bestseller'] },
-    // Wraps
-    { name:'Crispy Chicken Wrap', slug:'crispy-chicken-wrap', description:'Crispy Chicken Tenders, Jalapeño, Lettuce & Secret Sauce', price:875, categorySlug:'wraps', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Americana Chicken Wrap', slug:'americana-chicken-wrap', description:'Grilled Chicken, Sauté Veggies & Secret Sauce', price:825, categorySlug:'wraps', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Sriracha Chicken Wrap', slug:'sriracha-chicken-wrap', description:'Grilled Chicken, Lettuce, Sauté Veggies, Cheese & Secret Sauce', price:825, categorySlug:'wraps', hasHeatLevel:false, isFeatured:false, tags:[] },
-    // Fries
-    { name:'Loaded Waffle Fries', slug:'loaded-waffle-fries', description:'Criss Cross Potato Fries, Hot Chicken, Pickles, Parsley & Sauce', price:895, categorySlug:'fries', hasHeatLevel:false, isFeatured:true, tags:['bestseller'] },
-    // Shakes
-    { name:'Choco Berry Shake', slug:'choco-berry-shake', description:'Hand spun chocolate berry shake', price:695, categorySlug:'shakes', hasHeatLevel:false, isFeatured:false, tags:['new'] },
-    { name:'Chocolate Shake', slug:'chocolate-shake', description:'Hand spun chocolate shake', price:695, categorySlug:'shakes', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Strawberry Shake', slug:'strawberry-shake', description:'Hand spun strawberry shake', price:695, categorySlug:'shakes', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Cookies & Cream Shake', slug:'cookies-cream-shake', description:'Hand spun cookies & cream shake', price:695, categorySlug:'shakes', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Vanilla Shake', slug:'vanilla-shake', description:'Hand spun vanilla shake', price:695, categorySlug:'shakes', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Salted Caramel Shake', slug:'salted-caramel-shake', description:'Hand spun salted caramel shake', price:695, categorySlug:'shakes', hasHeatLevel:false, isFeatured:false, tags:[] },
-    // SS Treats
-    { name:'Toastie', slug:'toastie', description:'Choose your flavour: Nutella, Strawberry or Dark Choc', price:675, categorySlug:'ss-treats', hasHeatLevel:false, isFeatured:false, tags:['new'] },
-    { name:'Churros', slug:'churros', description:'5 Churros Sticks Dusted With Cinnamon Sugar & 1 Dip (Nutella / Caramel / Dark Choc)', price:550, categorySlug:'ss-treats', hasHeatLevel:false, isFeatured:false, tags:[] },
-    // Extras
-    { name:'Crinkle Fries', slug:'crinkle-fries', description:'Classic crinkle-cut fries', price:350, categorySlug:'extras', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Waffle Fries', slug:'waffle-fries', description:'Golden waffle fries', price:350, categorySlug:'extras', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Mac & Cheese', slug:'mac-cheese', description:'Creamy mac & cheese', price:500, categorySlug:'extras', hasHeatLevel:false, isFeatured:false, tags:[] },
-    // Drinks
-    { name:'Pepsi', slug:'pepsi', description:'330ml can', price:120, categorySlug:'drinks', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Diet Pepsi', slug:'diet-pepsi', description:'330ml can', price:120, categorySlug:'drinks', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'7UP', slug:'7up', description:'330ml can', price:120, categorySlug:'drinks', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Mirinda', slug:'mirinda', description:'330ml can', price:120, categorySlug:'drinks', hasHeatLevel:false, isFeatured:false, tags:[] },
-    { name:'Water', slug:'water', description:'500ml bottle', price:100, categorySlug:'drinks', hasHeatLevel:false, isFeatured:false, tags:[] },
+    { name:'The Sando',               slug:'the-sando',              desc:'House Bread, Hot Chicken Tenders, Cheese Fondue & Comeback Sauce.',                              price:975,  cat:'bird-menu', heat:true,  feat:true,  tags:['signature','bestseller'], img:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=800' },
+    { name:'Hot Chicken Slider',      slug:'hot-chicken-slider',     desc:'House Bun, Hot Chicken, Coleslaw, Pickles, Cheese & Comeback Sauce.',                            price:875,  cat:'sliders',   heat:true,  feat:true,  tags:['bestseller'],           img:'https://images.unsplash.com/photo-1550547660-d9450f859349?q=80&w=800' },
+    { name:'Honey Sriracha Slider',   slug:'honey-sriracha-slider',  desc:'House Bun, Crispy Chicken Fillet, Lettuce, Pickles, Cheese & Honey Sriracha Sauce.',             price:875,  cat:'sliders',   heat:false, feat:false, tags:['new'],                  img:'https://images.unsplash.com/photo-1586816001966-79b736744398?q=80&w=800' },
+    { name:'Hot Honey Ranch Slider',  slug:'hot-honey-ranch-slider', desc:'House Bun, Crispy Chicken Fillet, Lettuce, Cheese & Honey Ranch Mayo.',                          price:875,  cat:'sliders',   heat:false, feat:false, tags:['new'],                  img:'https://images.unsplash.com/photo-1553979459-d2229ba7433b?q=80&w=800' },
+    { name:'Caesar Chicken Slider',   slug:'caesar-chicken-slider',  desc:'House Bun, Crispy Chicken Fillet, Lettuce, Cheese & Secret Sauce.',                              price:875,  cat:'sliders',   heat:false, feat:false, tags:['new'],                  img:'https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?q=80&w=800' },
+    { name:'Red Tenders (5 Pcs)',     slug:'red-tenders',            desc:'5 Pcs of Tenders Served With Fries & Comeback Sauce. Choose your heat level.',                  price:1245, cat:'tenders',   heat:true,  feat:true,  tags:['signature','bestseller'], img:'https://images.unsplash.com/photo-1562967914-608f82629710?q=80&w=800' },
+    { name:'Crunchy Tenders (5 Pcs)', slug:'crunchy-tenders',        desc:'5 Pcs of Crunchy Tenders Served With Fries & Comeback Sauce.',                                   price:1245, cat:'tenders',   heat:false, feat:true,  tags:['bestseller'],           img:'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=800' },
+    { name:'Crispy Chicken Wrap',     slug:'crispy-chicken-wrap',    desc:'Crispy Chicken Tenders, Jalapeño, Lettuce & Secret Sauce.',                                       price:875,  cat:'wraps',     heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1559847844-5315695dadae?q=80&w=800' },
+    { name:'Americana Chicken Wrap',  slug:'americana-chicken-wrap', desc:'Grilled Chicken, Sauté Veggies & Secret Sauce.',                                                  price:825,  cat:'wraps',     heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1561050501-38fecab65c0b?q=80&w=800' },
+    { name:'Sriracha Chicken Wrap',   slug:'sriracha-chicken-wrap',  desc:'Grilled Chicken, Lettuce, Sauté Veggies, Cheese & Secret Sauce.',                                price:825,  cat:'wraps',     heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1515516969-d4008cc6241a?q=80&w=800' },
+    { name:'Loaded Waffle Fries',     slug:'loaded-waffle-fries',    desc:'Criss Cross Potato Fries, Hot Chicken, Pickles, Parsley & Sauce.',                               price:895,  cat:'fries',     heat:false, feat:true,  tags:['bestseller'],           img:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=800' },
+    { name:'Choco Berry Shake',       slug:'choco-berry-shake',      desc:'Hand spun chocolate berry shake.',                                                                price:695,  cat:'shakes',    heat:false, feat:false, tags:['new'],                  img:'https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=800' },
+    { name:'Chocolate Shake',         slug:'chocolate-shake',        desc:'Hand spun chocolate shake.',                                                                      price:695,  cat:'shakes',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1572490122747-3968b75cc699?q=80&w=800' },
+    { name:'Strawberry Shake',        slug:'strawberry-shake',       desc:'Hand spun strawberry shake.',                                                                     price:695,  cat:'shakes',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?q=80&w=800' },
+    { name:'Cookies & Cream Shake',   slug:'cookies-cream-shake',    desc:'Hand spun cookies & cream shake.',                                                                price:695,  cat:'shakes',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1579954115545-a95591f28bfc?q=80&w=800' },
+    { name:'Vanilla Shake',           slug:'vanilla-shake',          desc:'Hand spun vanilla shake.',                                                                        price:695,  cat:'shakes',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1619474987890-910c3f9eab17?q=80&w=800' },
+    { name:'Salted Caramel Shake',    slug:'salted-caramel-shake',   desc:'Hand spun salted caramel shake.',                                                                 price:695,  cat:'shakes',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1520201163981-8cc95007dd2a?q=80&w=800' },
+    { name:'Toastie',                 slug:'toastie',                desc:'Choose your flavour: Nutella, Strawberry or Dark Choc.',                                          price:675,  cat:'ss-treats', heat:false, feat:false, tags:['new'],                  img:'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?q=80&w=800' },
+    { name:'Churros',                 slug:'churros',                desc:'5 Churros Sticks Dusted With Cinnamon Sugar & 1 Dip (Nutella / Caramel / Dark Choc).',             price:550,  cat:'ss-treats', heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1589093569870-82e6d2b1d1b3?q=80&w=800' },
+    { name:'Crinkle Fries',           slug:'crinkle-fries',          desc:'Classic crinkle-cut fries.',                                                                      price:350,  cat:'extras',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1518013431117-eb1465fa5752?q=80&w=800' },
+    { name:'Waffle Fries',            slug:'waffle-fries',           desc:'Golden waffle fries.',                                                                            price:350,  cat:'extras',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?q=80&w=800' },
+    { name:'Mac & Cheese',            slug:'mac-cheese',             desc:'Creamy mac & cheese.',                                                                            price:500,  cat:'extras',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1543339308-43e59d6b73a6?q=80&w=800' },
+    { name:'Pepsi',                   slug:'pepsi',                  desc:'330ml can.',                                                                                      price:120,  cat:'drinks',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1527960471264-932f39eb5846?q=80&w=800' },
+    { name:'Diet Pepsi',              slug:'diet-pepsi',             desc:'330ml can.',                                                                                      price:120,  cat:'drinks',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1527960471264-932f39eb5846?q=80&w=800' },
+    { name:'7UP',                     slug:'7up',                    desc:'330ml can.',                                                                                      price:120,  cat:'drinks',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1527960471264-932f39eb5846?q=80&w=800' },
+    { name:'Mirinda',                 slug:'mirinda',                desc:'330ml can.',                                                                                      price:120,  cat:'drinks',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1527960471264-932f39eb5846?q=80&w=800' },
+    { name:'Water',                   slug:'water',                  desc:'500ml bottle.',                                                                                   price:100,  cat:'drinks',    heat:false, feat:false, tags:[],                       img:'https://images.unsplash.com/photo-1548839140-29a749e1cf4d?q=80&w=800' },
   ];
 
   for (const p of products) {
-    const { categorySlug, ...data } = p;
     await db.product.upsert({
-      where:  { slug: data.slug },
-      create: { ...data, categoryId:catMap[categorySlug], stock:100, images:[], compareAtPrice:null },
-      update: { ...data, categoryId:catMap[categorySlug] },
+      where:  { slug: p.slug },
+      create: { name:p.name, slug:p.slug, description:p.desc, price:p.price, categoryId:catMap[p.cat], hasHeatLevel:p.heat, isFeatured:p.feat, isAvailable:true, stock:100, tags:p.tags, images:[p.img], compareAtPrice:null },
+      update: { name:p.name, description:p.desc, price:p.price, categoryId:catMap[p.cat], hasHeatLevel:p.heat, isFeatured:p.feat, tags:p.tags, images:[p.img] },
     });
   }
-  console.log('Products seeded:', products.length);
 
-  // Coupon
   await db.coupon.upsert({ where:{ code:'SEVENSIDES10' }, create:{ code:'SEVENSIDES10', type:'PERCENTAGE', value:10, minOrderAmount:1500, isActive:true }, update:{} });
-  console.log('Coupon SEVENSIDES10 created');
 
-  console.log('Seed complete!');
+  console.log('Seven Sides seed complete.');
 }
 
 main().then(() => db.$disconnect()).catch(e => { console.error(e); db.$disconnect(); process.exit(1); });

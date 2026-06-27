@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Menu, X, User, LogOut, ClipboardList, ChevronRight, Flame } from 'lucide-react';
+import {
+  ShoppingBag, Menu, X, User, LogOut, ClipboardList, ChevronRight,
+} from 'lucide-react';
 import { useCartStore } from '@/lib/cart-store';
 import { NAV_LINKS } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -20,12 +22,23 @@ export default function Navbar() {
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 20);
-    fn(); window.addEventListener('scroll', fn, { passive: true });
+    fn();
+    window.addEventListener('scroll', fn, { passive: true });
     return () => window.removeEventListener('scroll', fn);
   }, []);
 
   useEffect(() => { setOpen(false); setUserOpen(false); }, [pathname]);
-  useEffect(() => { document.body.style.overflow = open ? 'hidden' : ''; return () => { document.body.style.overflow = ''; }; }, [open]);
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [open]);
+
+  useEffect(() => {
+    if (!userOpen) return;
+    const h = () => setUserOpen(false);
+    const t = setTimeout(() => document.addEventListener('click', h), 0);
+    return () => { clearTimeout(t); document.removeEventListener('click', h); };
+  }, [userOpen]);
 
   return (
     <>
@@ -35,14 +48,15 @@ export default function Navbar() {
       )}>
         <div className="container-px mx-auto flex h-20 max-w-7xl items-center justify-between gap-4">
 
-          {/* Logo */}
+          {/* Logo — gold circle + SEVEN/SIDES matching brand */}
           <Link href="/" className="flex items-center gap-3 group shrink-0" aria-label="Seven Sides">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gold-500 group-hover:bg-gold-400 transition-colors shadow-gold">
-              <span className="font-display text-xl font-bold text-dark-600 leading-none">7</span>
+            <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full bg-gold-500 group-hover:bg-gold-400 transition-all shadow-gold">
+              <span className="font-display text-[10px] tracking-[0.15em] text-dark-600 leading-none">SEVEN</span>
+              <span className="font-display text-[10px] tracking-[0.15em] text-teal-800 leading-none mt-0.5">SIDES</span>
             </div>
-            <div className="hidden sm:block leading-none">
-              <p className="font-display text-lg tracking-wide text-white leading-none">SEVEN</p>
-              <p className="font-display text-lg tracking-wide text-gold-500 leading-none -mt-0.5">SIDES</p>
+            <div className="hidden sm:flex flex-col leading-none">
+              <span className="font-display text-base tracking-widest text-white leading-none group-hover:text-gold-400 transition-colors">SEVEN</span>
+              <span className="font-display text-base tracking-widest text-teal-400 leading-none group-hover:text-teal-300 transition-colors -mt-0.5">SIDES</span>
             </div>
           </Link>
 
@@ -55,21 +69,21 @@ export default function Navbar() {
                   pathname === l.href
                     ? 'bg-gold-500/20 text-gold-400'
                     : 'text-white/80 hover:text-white hover:bg-white/5',
-                )}
-              >
+                )}>
                 {l.label}
               </Link>
             ))}
           </nav>
 
-          {/* Actions */}
+          {/* Right actions */}
           <div className="flex items-center gap-2">
             <Link href="/menu" className="hidden sm:inline-flex btn-gold py-2.5 px-5 text-xs">
               Order Now
             </Link>
 
+            {/* Cart */}
             <Link href="/cart" aria-label={`Cart — ${count} items`}
-              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-dark-300 text-white hover:border-gold-500 hover:text-gold-400 transition-all duration-200 group">
+              className="relative flex h-10 w-10 items-center justify-center rounded-full border border-dark-300 text-white hover:border-gold-500 hover:text-gold-400 transition-all duration-200">
               <ShoppingBag className="h-5 w-5" strokeWidth={1.5} />
               {count > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-gold-500 text-[10px] font-bold text-dark-600 animate-bounce-sm">
@@ -78,7 +92,7 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* User */}
+            {/* Account */}
             <div className="relative hidden sm:block">
               <button onClick={e => { e.stopPropagation(); setUserOpen(v => !v); }} aria-label="Account"
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-dark-300 text-white hover:border-teal-500 hover:text-teal-400 transition-all">
@@ -93,16 +107,14 @@ export default function Navbar() {
                   {session ? (
                     <>
                       <div className="flex items-center gap-3 rounded-xl bg-dark-400 px-3 py-3 mb-2">
-                        <div className="h-8 w-8 flex items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white shrink-0">
-                          {session.user.name.charAt(0).toUpperCase()}
-                        </div>
+                        <div className="h-8 w-8 flex items-center justify-center rounded-full bg-teal-600 text-sm font-bold text-white shrink-0">{session.user.name.charAt(0).toUpperCase()}</div>
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-white">{session.user.name}</p>
                           <p className="truncate text-xs text-dark-100">{session.user.email}</p>
                         </div>
                       </div>
-                      <Link href="/account" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-white/80 hover:bg-dark-400 hover:text-white transition-colors"><User className="h-4 w-4 text-teal-400" /> My Account</Link>
-                      <Link href="/account/orders" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-white/80 hover:bg-dark-400 hover:text-white transition-colors"><ClipboardList className="h-4 w-4 text-teal-400" /> Order History</Link>
+                      <Link href="/account"        className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-white/80 hover:bg-dark-400 hover:text-white transition-colors"><User className="h-4 w-4 text-teal-400" /> My Account</Link>
+                      <Link href="/account/orders" className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-white/80 hover:bg-dark-400 hover:text-white transition-colors"><ClipboardList className="h-4 w-4 text-teal-400" /> Orders</Link>
                       {session.user.role === 'ADMIN' && (
                         <>
                           <div className="my-1 border-t border-dark-300" />
@@ -138,16 +150,14 @@ export default function Navbar() {
       {open && (
         <div className="fixed inset-0 top-20 z-40 overflow-y-auto bg-dark-600/98 backdrop-blur-xl lg:hidden">
           <div className="container-px py-6 space-y-1.5">
-
             <div className="flex items-center gap-4 rounded-2xl bg-dark-400 border border-dark-300 px-5 py-4 mb-5">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-gold-500 shadow-gold">
-                <span className="font-display text-xl font-bold text-dark-600">7</span>
+              <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full bg-gold-500 shadow-gold">
+                <span className="font-display text-[10px] tracking-[0.15em] text-dark-600 leading-none">SEVEN</span>
+                <span className="font-display text-[10px] tracking-[0.15em] text-teal-800 leading-none mt-0.5">SIDES</span>
               </div>
               <div>
                 <p className="font-display text-lg text-white leading-tight">SEVEN SIDES</p>
-                <p className="text-xs text-dark-100 flex items-center gap-1 mt-0.5">
-                  <Flame className="h-3 w-3 text-gold-500" strokeWidth={2} /> Home of Red Tenders
-                </p>
+                <p className="text-xs text-dark-100 mt-0.5">Home of Red Tenders 🔥</p>
               </div>
             </div>
 
@@ -157,7 +167,7 @@ export default function Navbar() {
                   'flex items-center justify-between rounded-2xl px-4 py-4 text-sm font-semibold transition-colors',
                   pathname === l.href ? 'bg-gold-500/20 text-gold-400' : 'text-white hover:bg-dark-400',
                 )}>
-                {l.label} <ChevronRight className={cn('h-4 w-4', pathname===l.href?'text-gold-400':'text-dark-100')} />
+                {l.label} <ChevronRight className={cn('h-4 w-4 shrink-0', pathname===l.href?'text-gold-400':'text-dark-100')} />
               </Link>
             ))}
 
@@ -172,8 +182,8 @@ export default function Navbar() {
                     </div>
                   </div>
                   <Link href="/account"        className="flex items-center gap-2 rounded-2xl px-4 py-3.5 text-sm text-white/80 hover:bg-dark-400 transition-colors"><User className="h-4 w-4 text-teal-400 shrink-0" /> My Account</Link>
-                  <Link href="/account/orders" className="flex items-center gap-2 rounded-2xl px-4 py-3.5 text-sm text-white/80 hover:bg-dark-400 transition-colors"><ClipboardList className="h-4 w-4 text-teal-400 shrink-0" /> Order History</Link>
-                  {session.user.role === 'ADMIN' && <Link href="/admin/dashboard" className="flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-semibold text-gold-400 hover:bg-dark-400 transition-colors">Admin Dashboard <ChevronRight className="h-4 w-4" /></Link>}
+                  <Link href="/account/orders" className="flex items-center gap-2 rounded-2xl px-4 py-3.5 text-sm text-white/80 hover:bg-dark-400 transition-colors"><ClipboardList className="h-4 w-4 text-teal-400 shrink-0" /> Orders</Link>
+                  {session.user.role === 'ADMIN' && <Link href="/admin/dashboard" className="flex items-center justify-between rounded-2xl px-4 py-3.5 text-sm font-semibold text-gold-400 hover:bg-dark-400 transition-colors">Admin <ChevronRight className="h-4 w-4" /></Link>}
                   <button onClick={async () => { await fetch('/api/auth/logout',{method:'POST'}); window.location.href='/'; }}
                     className="flex w-full items-center gap-2 rounded-2xl px-4 py-3.5 text-sm text-red-400 hover:bg-dark-400 transition-colors">
                     <LogOut className="h-4 w-4" /> Sign Out
